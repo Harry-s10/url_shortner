@@ -3,6 +3,7 @@ from typing import Type
 from sqlalchemy.orm import Session
 
 import models
+from authentication import get_password_hash
 from schemas import UserCreate
 
 
@@ -12,7 +13,7 @@ def get_user(id: int, db: Session):
 
 
 def create(request: UserCreate, db: Session):
-    request.password = models.User.hash_password(request.password)
+    request.password = get_password_hash(request.password)
     new_user: models.User = models.User(**request.model_dump())
     db.add(new_user)
     db.commit()
@@ -20,6 +21,6 @@ def create(request: UserCreate, db: Session):
     return new_user
 
 
-def get_user_id(email: str, db: Session):
+def get_user_from_email(email: str, db: Session):
     user: Type[models.User] | None = db.query(models.User).filter(models.User.email == email).first()
     return user if user else None

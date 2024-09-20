@@ -6,22 +6,24 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 import models
-import schemas
+from authentication import get_current_active_user
 from database import engine, get_db
 from repository.url_util import absolute_url, create_short_url, extend_url_expiry, get_url_access_logs, get_url_record, \
     log_url_access
-from routers import users
-from schemas import URLAccessLog, URLAnalytics, URLBase, URLCreate
+from routers import login, users
+from schemas import URLAccessLog, URLAnalytics, URLBase, URLCreate, User
 
 app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
 
 app.include_router(users.router)
+app.include_router(login.router)
 
 
 @app.post("/shorten-url", response_model=URLCreate)
-def shorten_url(request: URLBase, db: Session = Depends(get_db)):
+def shorten_url(request: URLBase, db: Session = Depends(get_db),
+                current_user: User = Depends(get_current_active_user)):
     url_record = create_short_url(request.long_url, db)
     url_record.short_url = f"http://localhost:8000/{url_record.short_url}"
     return url_record
@@ -47,12 +49,14 @@ def redirect_to_url(short_code: str, request: Request, db: Session = Depends(get
 
 
 @app.put("/extend-url/{short_code}", status_code=status.HTTP_202_ACCEPTED)
-def extend_expiry(short_code: str, db: Session = Depends(get_db)):
+def extend_expiry(short_code: str, db: Session = Depends(get_db),
+                  current_user: User = Depends(get_current_active_user)):
     return extend_url_expiry(short_code, db)
 
 
-@app.get("/analytics/{short_code}", response_model=schemas.URLAnalytics)
-def get_url_analytics(short_code: str, db: Session = Depends(get_db)):
+@app.get("/analytics/{short_code}", response_model=URLAnalytics)
+def get_url_analytics(short_code: str, db: Session = Depends(get_db),
+                      current_user: User = Depends(get_current_active_user)):
     url_record = get_url_record(short_code, db)
     if url_record is None:
         raise HTTPException(
