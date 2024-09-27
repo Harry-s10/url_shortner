@@ -1,6 +1,8 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional, Type
 
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -10,9 +12,11 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 
+load_dotenv()
+
 # to get a string like this run:
 # openssl rand -hex 32
-SECRET_KEY = ""
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
