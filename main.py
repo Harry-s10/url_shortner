@@ -10,7 +10,7 @@ from authentication import get_current_active_user
 from database import engine, get_db
 from repository.url_util import absolute_url, create_short_url, extend_url_expiry, get_url_access_logs, get_url_record, \
     log_url_access
-from routers import login, users
+from routers import login, register, users
 from schemas import URLAccessLog, URLAnalytics, URLBase, URLCreate, User
 
 app = FastAPI()
@@ -19,6 +19,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app.include_router(users.router)
 app.include_router(login.router)
+app.include_router(register.router)
 
 
 @app.post("/shorten-url", response_model=URLCreate)
